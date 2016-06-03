@@ -23,9 +23,27 @@ npm install --save-dev wsrv
 
 ## Example
 
+Serve the content of the `www` subdirectory with SPA support and open browser
+instance at the root:
+
 ```sh
 ./node_modules/.bin/wsrv ./www -p 3000 -s -o
 ```
+
+## Start script
+
+Alternatively you can configure start script in your `package.json` to serve
+content of the `www` folder like following:
+
+```json
+{
+    "scripts": {
+        "start": "wsrv ./www -p 3000 -s -o -l",
+    }
+}
+```
+
+This will automatically start server and open browser page on `npm start`.
 
 *Your default browser should automatically open at http://localhost:3000 address.*
 
