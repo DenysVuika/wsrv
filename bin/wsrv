@@ -1,0 +1,252 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const Path = require('path');
+const Hapi = require('hapi');
+const Inert = require('inert');
+const Good = require('good');
+const opn = require('opn');
+const fs = require('fs');
+const tinylr = require('tiny-lr');
+const chokidar = require('chokidar');
+
+const argv = require('yargs')
+    .usage('wsrv [path] [options]')
+    .option('a', {
+        alias: 'address',
+        describe: 'Address to use',
+        type: 'string',
+        default: 'localhost'
+    })
+    .option('p', {
+        alias: 'port',
+        describe: 'Port to use',
+        type: 'number'
+        //default: 8000
+    })
+    .option('d', {
+        alias: 'dir',
+        describe: 'Working directory',
+        type: 'string'
+    })
+    .option('s', {
+        alias: 'spa',
+        describe: 'Enable SPA (Single Page Application) support',
+        type: 'boolean',
+        default: false
+    })
+    .option('o', {
+        alias: 'open',
+        describe: 'Open browser window after starting the server',
+        type: 'boolean',
+        default: false
+    })
+    .option('l', {
+        alias: 'livereload',
+        describe: 'Enable live reload support',
+        type: 'boolean',
+        default: false
+    })
+    .help('h')
+    .argv;
+
+let host = argv.a;
+let port = argv.p;
+let dir = Path.resolve(argv._[0] || argv.d || process.cwd());
+let spa = argv.spa;
+let open = argv.o;
+let liveReload = argv.l;
+
+console.log('Using directory: ' + dir);
+
+// Create a server with a host and port
+const server = new Hapi.Server({
+    connections: {
+        routes: {
+            //cors: true,
+            files: {
+                relativeTo: dir
+            }
+        }
+    }
+});
+
+server.connection({
+    host: host,
+    port: port
+});
+
+server.register(Inert, () => {});
+
+if (liveReload) {
+
+    server.route({
+        method: 'GET',
+        path: '/index.html',
+        handler: function (request, reply) {
+            return serveLiveReloadedIndex(request, reply);
+        }
+    });
+
+}
+
+/*
+server.route({
+    method: 'GET',
+    path: '/livereload.js',
+    handler: function (request, reply) {
+        var path = Path.join(__dirname, './../node_modules/livereload-js/dist/livereload.js');
+        return reply.file(path, {confine: false});
+    }
+});
+*/
+
+server.route({
+    method: 'GET',
+    path: '/{param*}',
+    handler: {
+        directory: {
+            path: '.',
+            listing: true,
+            index: true
+        }
+    }
+});
+
+function serveLiveReloadedIndex(request, reply) {
+    let fileName = Path.join(dir, 'index.html');
+    fs.readFile(fileName, 'utf8', function (err, data) {
+        if (err) {
+            console.log(err);
+            return reply(err, null);
+        }
+        var body = data;
+        var snippet = `
+            <script>document.write(
+                '<script src="http://'
+                + (location.host || 'localhost').split(':')[0]
+                + ':35729/livereload.js?snipver=1"></'
+                + 'script>')
+            </script>
+        `;
+        body = body.replace(/<\/body>/, function (w) {
+            return snippet + w;
+        });
+        reply(body);
+    });
+}
+
+server.ext('onPreResponse', function (request, reply) {
+    const response = request.response;
+
+    if (liveReload &&
+        !response.isBoom &&
+        response.source &&
+        response.source.path) {
+
+        let fileName = Path.basename(response.source.path);
+        if (fileName === 'index.html') {
+            return serveLiveReloadedIndex(request, reply);
+        }
+    }
+
+    // SPA mode
+    if (spa &&
+        response.isBoom &&
+        response.output.statusCode === 404) {
+
+        // return reply.file('404.html').code(404);
+        // return reply.redirect('/');
+        //return reply.file('index.html').code(200);
+        if (liveReload) {
+            return serveLiveReloadedIndex(request, reply);
+        } else {
+            return reply.file('index.html');
+        }
+    }
+
+    return reply.continue();
+});
+
+server.register({
+    register: Good,
+    options: {
+        reporters: {
+            console: [{
+                module: 'good-squeeze',
+                name: 'Squeeze',
+                args: [{
+                    response: '*',
+                    log: '*'
+                }]
+            }, {
+                module: 'good-console'
+            }, 'stdout']
+        }
+    }
+}, (err) => {
+
+    if (err) {
+        throw err; // something bad happened loading the plugin
+    }
+
+    server.start((err) => {
+        if (err) {
+            throw err;
+        }
+        console.log(`Server running at: ${server.info.uri}`);
+
+        if (open) {
+            opn(server.info.uri);
+        }
+    });
+
+});
+
+if (liveReload) {
+
+    // standard LiveReload port
+    let lrPort = 35729;
+
+    // tinylr(opts) => new tinylr.Server(opts);
+    tinylr().listen(lrPort, () => {
+        console.log(`Live reload listening on ${lrPort} port`);
+    });
+
+    let watcher = chokidar.watch('file, dir, glob, or array', {
+        ignored: [
+            /[\/\\]\./,
+            '**/*node_modules',
+            //'**/*.html', '!**/*page1.html'
+        ],
+        persistent: true
+    });
+
+    let log = console.log.bind(console);
+
+    watcher
+        .on('add', path => log(`File ${path} has been added`))
+        .on('change', path => log(`File ${path} has been changed`))
+        .on('unlink', path => log(`File ${path} has been removed`));
+
+    watcher.on('change', throttle(200, path => {
+        //console.log(Path.relative(dir, path));
+        tinylr.changed(path);
+    }));
+
+    watcher.add(dir);
+    //watcher.add(dir + '/**/*.html');
+}
+
+function throttle(delay, fn) {
+  var now = Date.now();
+
+  return function() {
+    var from = Date.now();
+    var interval = from - now;
+    if (interval < delay) return;
+    now = from;
+    fn.apply(this, arguments);
+  };
+}

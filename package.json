@@ -1,0 +1,39 @@
+{
+  "name": "wsrv",
+  "version": "0.1.0",
+  "description": "Micro web server for development purposes",
+  "main": "./bin/wsrv.js",
+  "scripts": {
+    "start": "node ./bin/wsrv",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DenisVuyka/wsrv.git"
+  },
+  "keywords": [
+    "web",
+    "server"
+  ],
+  "author": "Denys Vuika <denys.vuika@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/DenisVuyka/wsrv/issues"
+  },
+  "homepage": "https://github.com/DenisVuyka/wsrv#readme",
+  "bin": {
+    "wsrv": "./bin/wsrv"
+  },
+  "dependencies": {
+    "chokidar": "^1.5.1",
+    "good": "^7.0.1",
+    "good-console": "^6.1.2",
+    "good-squeeze": "^3.0.1",
+    "hapi": "^13.4.1",
+    "inert": "^4.0.0",
+    "livereload-js": "^2.2.2",
+    "opn": "^4.0.2",
+    "tiny-lr": "^0.2.1",
+    "yargs": "^4.7.1"
+  }
+}
