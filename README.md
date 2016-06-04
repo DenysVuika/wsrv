@@ -1,5 +1,7 @@
 # wsrv: micro web server for development purposes
 
+[![npm](https://img.shields.io/npm/v/wsrv.svg?maxAge=2592000)](https://www.npmjs.com/package/wsrv)
+
 Features:
 
 - Dynamic port allocation on startup
