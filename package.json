@@ -16,7 +16,7 @@
     "server"
   ],
   "author": "Denys Vuika <denys.vuika@gmail.com>",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/DenisVuyka/wsrv/issues"
   },
