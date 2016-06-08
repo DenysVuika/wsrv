@@ -32,36 +32,41 @@ const argv = require('yargs')
     .usage('wsrv [path] [options]')
     .option('a', {
         alias: 'address',
-        describe: 'Address to use',
+        describe: 'Address to use.',
         type: 'string',
         default: 'localhost'
     })
     .option('p', {
         alias: 'port',
-        describe: 'Port to use',
+        describe: 'Port to use.',
         type: 'number'
-        //default: 8000
     })
     .option('d', {
         alias: 'dir',
-        describe: 'Working directory',
+        describe: 'Sets working directory.',
         type: 'string'
     })
     .option('s', {
         alias: 'spa',
-        describe: 'Enable SPA (Single Page Application) support',
+        describe: 'Enables SPA (Single Page Application) support.',
         type: 'boolean',
         default: false
     })
     .option('o', {
         alias: 'open',
-        describe: 'Open browser window after starting the server',
+        describe: 'Opens browser window after starting the server.',
         type: 'boolean',
         default: false
     })
     .option('l', {
         alias: 'livereload',
-        describe: 'Enable live reload support',
+        describe: 'Enable live reload support.',
+        type: 'boolean',
+        default: false
+    })
+    .option('V', {
+        alias: 'verbose',
+        describe: 'Enables verbose output.',
         type: 'boolean',
         default: false
     })
@@ -74,8 +79,15 @@ let dir = Path.resolve(argv._[0] || argv.d || process.cwd());
 let spa = argv.spa;
 let open = argv.o;
 let liveReload = argv.l;
+let verbose = argv.verbose;
 
-console.log('Using directory: ' + dir);
+const log = function (message) {
+    if (verbose && message) {
+        console.log(message);
+    }
+};
+
+log(`Using directory: ${dir}`)
 
 // Create a server with a host and port
 const server = new Hapi.Server({
@@ -108,17 +120,6 @@ if (liveReload) {
 
 }
 
-/*
-server.route({
-    method: 'GET',
-    path: '/livereload.js',
-    handler: function (request, reply) {
-        var path = Path.join(__dirname, './../node_modules/livereload-js/dist/livereload.js');
-        return reply.file(path, {confine: false});
-    }
-});
-*/
-
 server.route({
     method: 'GET',
     path: '/{param*}',
@@ -135,7 +136,7 @@ function serveLiveReloadedIndex(request, reply) {
     let fileName = Path.join(dir, 'index.html');
     fs.readFile(fileName, 'utf8', function (err, data) {
         if (err) {
-            console.log(err);
+            log(err);
             return reply(err, null);
         }
         var body = data;
@@ -173,9 +174,6 @@ server.ext('onPreResponse', function (request, reply) {
         response.isBoom &&
         response.output.statusCode === 404) {
 
-        // return reply.file('404.html').code(404);
-        // return reply.redirect('/');
-        //return reply.file('index.html').code(200);
         if (liveReload) {
             return serveLiveReloadedIndex(request, reply);
         } else {
@@ -186,9 +184,9 @@ server.ext('onPreResponse', function (request, reply) {
     return reply.continue();
 });
 
-server.register({
-    register: Good,
-    options: {
+let loggingOptions = {};
+if (verbose) {
+    loggingOptions = {
         reporters: {
             console: [{
                 module: 'good-squeeze',
@@ -201,7 +199,12 @@ server.register({
                 module: 'good-console'
             }, 'stdout']
         }
-    }
+    };
+}
+
+server.register({
+    register: Good,
+    options: loggingOptions
 }, (err) => {
 
     if (err) {
@@ -228,7 +231,7 @@ if (liveReload) {
 
     // tinylr(opts) => new tinylr.Server(opts);
     tinylr().listen(lrPort, () => {
-        console.log(`Live reload listening on ${lrPort} port`);
+        log(`Live reload listening on ${lrPort} port`);
     });
 
     let watcher = chokidar.watch('file, dir, glob, or array', {
@@ -239,8 +242,6 @@ if (liveReload) {
         ],
         persistent: true
     });
-
-    let log = console.log.bind(console);
 
     watcher
         .on('add', path => log(`File ${path} has been added`))
