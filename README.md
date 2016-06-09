@@ -51,14 +51,18 @@ This will automatically start server and open browser page on `npm start`.
 
 ## Available options
 
-`-a` or `--address` Address to use (defaults to `localhost`)
+`-a` or `--address` Address to use (defaults to `localhost`).
 
-`-p` or `--port` Port to use (free available port selected by default)
+`-p` or `--port` Port to use (free available port selected by default).
 
-`-d` or `--dir` Working directory
+`-d` or `--dir` Set working directory.
 
-`-s` or `--spa` Enable SPA (Single Page Application) support (defaults to `false`)
+`-s` or `--spa` Enable SPA (Single Page Application) support (defaults to `false`).
 
-`-o` or `--open` Open browser window after starting the server (defaults to `false`)
+`-o` or `--open` Open browser window after starting the server (defaults to `false`).
 
-`-l` or `--livereload` Enable live reload support
+`-l` or `--livereload` Enable live reload support (defaults to `false`).
+
+`-V` or `--verbose` Enable verbose output (defalts to `false`).
+
+`-v` or `--version` Show version information.
