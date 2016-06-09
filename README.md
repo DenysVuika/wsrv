@@ -66,3 +66,7 @@ This will automatically start server and open browser page on `npm start`.
 `-V` or `--verbose` Enable verbose output (defalts to `false`).
 
 `-v` or `--version` Show version information.
+
+`-w` or `--watch` Additional files to watch for live reload.
+
+`-h` Show help screen.

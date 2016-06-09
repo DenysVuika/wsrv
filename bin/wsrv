@@ -50,6 +50,12 @@ const argv = require('yargs')
         type: 'boolean',
         default: false
     })
+    .option('w', {
+        alias: 'watch',
+        describe: 'Additional files to watch for live reload.',
+        type: 'array',
+        default: []
+    })
     .option('V', {
         alias: 'verbose',
         describe: 'Enables verbose output.',
@@ -66,6 +72,7 @@ let spa = argv.spa;
 let open = argv.o;
 let liveReload = argv.l;
 let verbose = argv.verbose;
+let watch = argv.watch;
 
 const log = function (message) {
     if (verbose && message) {
@@ -73,7 +80,7 @@ const log = function (message) {
     }
 };
 
-log(`Using directory: ${dir}`)
+log(`Using directory: ${dir}`);
 
 // Create a server with a host and port
 const server = new Hapi.Server({
@@ -221,36 +228,49 @@ if (liveReload) {
     });
 
     let watcher = chokidar.watch('file, dir, glob, or array', {
-        ignored: [
-            /[\/\\]\./,
-            '**/*node_modules',
-            //'**/*.html', '!**/*page1.html'
-        ],
+        ignored: /[\\\/](node_modules|bower_components)[\\\/]/,
         persistent: true
     });
-
-    watcher
-        .on('add', path => log(`File ${path} has been added`))
-        .on('change', path => log(`File ${path} has been changed`))
-        .on('unlink', path => log(`File ${path} has been removed`));
-
-    watcher.on('change', throttle(200, path => {
-        //console.log(Path.relative(dir, path));
-        tinylr.changed(path);
-    }));
-
+    setupWatcher(watcher);
     watcher.add(dir);
-    //watcher.add(dir + '/**/*.html');
-}
 
-function throttle(delay, fn) {
-  var now = Date.now();
+    if (watch && watch.length > 0) {
+        log('Also watching for live reload:');
+        log(watch);
 
-  return function() {
-    var from = Date.now();
-    var interval = from - now;
-    if (interval < delay) return;
-    now = from;
-    fn.apply(this, arguments);
-  };
+        // setup additonal watcher with no 'ignored' presets
+        let extraWatcher = chokidar.watch('file, dir, glob, or array', {
+            persistent: true
+        });
+
+        setupWatcher(extraWatcher);
+
+        for (let i = 0; i < watch.length; i++) {
+            extraWatcher.add(watch[i]);
+        }
+    }
+
+    function setupWatcher(watcher) {
+        watcher
+            .on('add', path => log(`File ${path} has been added`))
+            .on('change', path => log(`File ${path} has been changed`))
+            .on('unlink', path => log(`File ${path} has been removed`));
+
+        watcher.on('change', throttle(200, path => {
+            //console.log(Path.relative(dir, path));
+            tinylr.changed(path);
+        }));
+    }
+
+    function throttle(delay, fn) {
+      var now = Date.now();
+
+      return function() {
+        var from = Date.now();
+        var interval = from - now;
+        if (interval < delay) return;
+        now = from;
+        fn.apply(this, arguments);
+      };
+    }
 }
