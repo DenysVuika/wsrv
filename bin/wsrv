@@ -12,6 +12,10 @@ const chokidar = require('chokidar');
 
 const argv = require('yargs')
     .usage('wsrv [path] [options]')
+    // version
+    .alias('v', 'version')
+        .version(function() { return require('../package').version; })
+        .describe('v', 'Shows version information.')
     .option('a', {
         alias: 'address',
         describe: 'Address to use.',
