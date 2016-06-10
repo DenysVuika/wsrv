@@ -9,6 +9,7 @@ const opn = require('opn');
 const fs = require('fs');
 const tinylr = require('tiny-lr');
 const chokidar = require('chokidar');
+const _ = require('lodash');
 
 const argv = require('yargs')
     .usage('wsrv [path] [options]')
@@ -62,17 +63,32 @@ const argv = require('yargs')
         type: 'boolean',
         default: false
     })
+    .option('c', {
+        alias: 'config',
+        describe: 'Path to custom configuration file.',
+        type: 'string'
+    })
     .help('h')
     .argv;
 
-let host = argv.a;
-let port = argv.p;
-let dir = Path.resolve(argv._[0] || argv.d || process.cwd());
-let spa = argv.spa;
-let open = argv.o;
-let liveReload = argv.l;
+// command line arguments have highest priority
+let overrides = {
+    host: argv.a,
+    port: argv.p,
+    dir: Path.resolve(argv._[0] || argv.d || process.cwd()),
+    spa: argv.s,
+    open: argv.o,
+    livereload: argv.l,
+    watch: argv.w,
+    lrPort: 35729
+};
+
 let verbose = argv.verbose;
-let watch = argv.watch;
+
+// External configuration
+let configName = argv.config || 'wsrv-config';
+let configPath = Path.resolve(configName);
+let config = {};
 
 const log = function (message) {
     if (verbose && message) {
@@ -80,7 +96,23 @@ const log = function (message) {
     }
 };
 
-log(`Using directory: ${dir}`);
+try {
+    config = require(configPath);
+    if (typeof config === 'function') {
+        config = config();
+    }
+} catch (err) {
+    if (err.code && err.code === 'MODULE_NOT_FOUND') {
+        log('Cound not find configuration file.');
+    } else {
+        throw (err);
+    }
+}
+
+_.merge(config, overrides);
+log(`Using configuration: ${configPath}`);
+log(config);
+log(`Serving directory: ${config.dir}`);
 
 // Create a server with a host and port
 const server = new Hapi.Server({
@@ -88,21 +120,20 @@ const server = new Hapi.Server({
         routes: {
             //cors: true,
             files: {
-                relativeTo: dir
+                relativeTo: config.dir
             }
         }
     }
 });
 
 server.connection({
-    host: host,
-    port: port
+    host: config.host,
+    port: config.port
 });
 
 server.register(Inert, () => {});
 
-if (liveReload) {
-
+if (config.livereload) {
     server.route({
         method: 'GET',
         path: '/index.html',
@@ -110,7 +141,6 @@ if (liveReload) {
             return serveLiveReloadedIndex(request, reply);
         }
     });
-
 }
 
 server.route({
@@ -126,7 +156,7 @@ server.route({
 });
 
 function serveLiveReloadedIndex(request, reply) {
-    let fileName = Path.join(dir, 'index.html');
+    let fileName = Path.join(config.dir, 'index.html');
     fs.readFile(fileName, 'utf8', function (err, data) {
         if (err) {
             log(err);
@@ -151,7 +181,7 @@ function serveLiveReloadedIndex(request, reply) {
 server.ext('onPreResponse', function (request, reply) {
     const response = request.response;
 
-    if (liveReload &&
+    if (config.livereload &&
         !response.isBoom &&
         response.source &&
         response.source.path) {
@@ -163,11 +193,11 @@ server.ext('onPreResponse', function (request, reply) {
     }
 
     // SPA mode
-    if (spa &&
+    if (config.spa &&
         response.isBoom &&
         response.output.statusCode === 404) {
 
-        if (liveReload) {
+        if (config.livereload) {
             return serveLiveReloadedIndex(request, reply);
         } else {
             return reply.file('index.html');
@@ -210,21 +240,16 @@ server.register({
         }
         console.log(`Server running at: ${server.info.uri}`);
 
-        if (open) {
+        if (config.open) {
             opn(server.info.uri);
         }
     });
 
 });
 
-if (liveReload) {
-
-    // standard LiveReload port
-    let lrPort = 35729;
-
-    // tinylr(opts) => new tinylr.Server(opts);
-    tinylr().listen(lrPort, () => {
-        log(`Live reload listening on ${lrPort} port`);
+if (config.livereload) {
+    tinylr().listen(config.lrPort, () => {
+        log(`Live reload listening on ${config.lrPort} port`);
     });
 
     let watcher = chokidar.watch('file, dir, glob, or array', {
@@ -232,11 +257,11 @@ if (liveReload) {
         persistent: true
     });
     setupWatcher(watcher);
-    watcher.add(dir);
+    watcher.add(config.dir);
 
-    if (watch && watch.length > 0) {
+    if (config.watch && config.watch.length > 0) {
         log('Also watching for live reload:');
-        log(watch);
+        log(config.watch);
 
         // setup additonal watcher with no 'ignored' presets
         let extraWatcher = chokidar.watch('file, dir, glob, or array', {
@@ -245,8 +270,8 @@ if (liveReload) {
 
         setupWatcher(extraWatcher);
 
-        for (let i = 0; i < watch.length; i++) {
-            extraWatcher.add(watch[i]);
+        for (let i = 0; i < config.watch.length; i++) {
+            extraWatcher.add(config.watch[i]);
         }
     }
 
