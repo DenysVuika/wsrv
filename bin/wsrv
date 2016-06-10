@@ -118,7 +118,7 @@ log(`Serving directory: ${config.dir}`);
 const server = new Hapi.Server({
     connections: {
         routes: {
-            //cors: true,
+            // cors: true,
             files: {
                 relativeTo: config.dir
             }
@@ -155,7 +155,7 @@ server.route({
     }
 });
 
-function serveLiveReloadedIndex(request, reply) {
+function serveLiveReloadedIndex (request, reply) {
     let fileName = Path.join(config.dir, 'index.html');
     fs.readFile(fileName, 'utf8', function (err, data) {
         if (err) {
@@ -185,7 +185,6 @@ server.ext('onPreResponse', function (request, reply) {
         !response.isBoom &&
         response.source &&
         response.source.path) {
-
         let fileName = Path.basename(response.source.path);
         if (fileName === 'index.html') {
             return serveLiveReloadedIndex(request, reply);
@@ -196,7 +195,6 @@ server.ext('onPreResponse', function (request, reply) {
     if (config.spa &&
         response.isBoom &&
         response.output.statusCode === 404) {
-
         if (config.livereload) {
             return serveLiveReloadedIndex(request, reply);
         } else {
@@ -229,7 +227,6 @@ server.register({
     register: Good,
     options: loggingOptions
 }, (err) => {
-
     if (err) {
         throw err; // something bad happened loading the plugin
     }
@@ -244,8 +241,31 @@ server.register({
             opn(server.info.uri);
         }
     });
-
 });
+
+function setupWatcher (watcher) {
+    watcher
+        .on('add', path => log(`File ${path} has been added`))
+        .on('change', path => log(`File ${path} has been changed`))
+        .on('unlink', path => log(`File ${path} has been removed`));
+
+    watcher.on('change', throttle(200, path => {
+        // console.log(Path.relative(dir, path));
+        tinylr.changed(path);
+    }));
+}
+
+function throttle (delay, fn) {
+    var now = Date.now();
+
+    return function () {
+        var from = Date.now();
+        var interval = from - now;
+        if (interval < delay) return;
+        now = from;
+        fn.apply(this, arguments);
+    };
+}
 
 if (config.livereload) {
     tinylr().listen(config.lrPort, () => {
@@ -273,29 +293,5 @@ if (config.livereload) {
         for (let i = 0; i < config.watch.length; i++) {
             extraWatcher.add(config.watch[i]);
         }
-    }
-
-    function setupWatcher(watcher) {
-        watcher
-            .on('add', path => log(`File ${path} has been added`))
-            .on('change', path => log(`File ${path} has been changed`))
-            .on('unlink', path => log(`File ${path} has been removed`));
-
-        watcher.on('change', throttle(200, path => {
-            //console.log(Path.relative(dir, path));
-            tinylr.changed(path);
-        }));
-    }
-
-    function throttle(delay, fn) {
-      var now = Date.now();
-
-      return function() {
-        var from = Date.now();
-        var interval = from - now;
-        if (interval < delay) return;
-        now = from;
-        fn.apply(this, arguments);
-      };
     }
 }
