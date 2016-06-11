@@ -5,7 +5,7 @@
   "main": "./bin/wsrv.js",
   "scripts": {
     "start": "node ./bin/wsrv",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "eslint ./bin/wsrv"
   },
   "repository": {
     "type": "git",
