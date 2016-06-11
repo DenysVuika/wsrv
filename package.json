@@ -5,15 +5,20 @@
   "main": "./bin/wsrv.js",
   "scripts": {
     "start": "node ./bin/wsrv",
-    "test": "eslint ./bin/wsrv"
+    "test": "npm run eslint",
+    "eslint": "eslint ./bin/wsrv && eslint ./lib/*.js && eslint ./index.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DenisVuyka/wsrv.git"
   },
   "keywords": [
+    "development",
+    "server",
+    "spa",
+    "static",
     "web",
-    "server"
+    "http"
   ],
   "author": "Denys Vuika <denys.vuika@gmail.com>",
   "license": "MIT",

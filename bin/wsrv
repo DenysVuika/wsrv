@@ -1,15 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 
-const Path = require('path');
-const Hapi = require('hapi');
-const Inert = require('inert');
-const Good = require('good');
-const opn = require('opn');
-const fs = require('fs');
-const tinylr = require('tiny-lr');
-const chokidar = require('chokidar');
+const path = require('path');
 const _ = require('lodash');
+const Server = require('../lib/server');
 
 const argv = require('yargs')
     .usage('wsrv [path] [options]')
@@ -75,19 +69,20 @@ const argv = require('yargs')
 let overrides = {
     host: argv.a,
     port: argv.p,
-    dir: Path.resolve(argv._[0] || argv.d || process.cwd()),
+    dir: path.resolve(argv._[0] || argv.d || process.cwd()),
     spa: argv.s,
     open: argv.o,
     livereload: argv.l,
     watch: argv.w,
-    lrPort: 35729
+    lrPort: 35729,
+    verbose: argv.verbose
 };
 
 let verbose = argv.verbose;
 
 // External configuration
 let configName = argv.config || 'wsrv-config';
-let configPath = Path.resolve(configName);
+let configPath = path.resolve(configName);
 let config = {};
 
 const log = function (message) {
@@ -111,187 +106,6 @@ try {
 
 _.merge(config, overrides);
 log(`Using configuration: ${configPath}`);
-log(config);
-log(`Serving directory: ${config.dir}`);
 
-// Create a server with a host and port
-const server = new Hapi.Server({
-    connections: {
-        routes: {
-            // cors: true,
-            files: {
-                relativeTo: config.dir
-            }
-        }
-    }
-});
-
-server.connection({
-    host: config.host,
-    port: config.port
-});
-
-server.register(Inert, () => {});
-
-if (config.livereload) {
-    server.route({
-        method: 'GET',
-        path: '/index.html',
-        handler: function (request, reply) {
-            return serveLiveReloadedIndex(request, reply);
-        }
-    });
-}
-
-server.route({
-    method: 'GET',
-    path: '/{param*}',
-    handler: {
-        directory: {
-            path: '.',
-            listing: true,
-            index: true
-        }
-    }
-});
-
-function serveLiveReloadedIndex (request, reply) {
-    let fileName = Path.join(config.dir, 'index.html');
-    fs.readFile(fileName, 'utf8', function (err, data) {
-        if (err) {
-            log(err);
-            return reply(err, null);
-        }
-        var body = data;
-        var snippet = `
-            <script>document.write(
-                '<script src="http://'
-                + (location.host || 'localhost').split(':')[0]
-                + ':35729/livereload.js?snipver=1"></'
-                + 'script>')
-            </script>
-        `;
-        body = body.replace(/<\/body>/, function (w) {
-            return snippet + w;
-        });
-        reply(body);
-    });
-}
-
-server.ext('onPreResponse', function (request, reply) {
-    const response = request.response;
-
-    if (config.livereload &&
-        !response.isBoom &&
-        response.source &&
-        response.source.path) {
-        let fileName = Path.basename(response.source.path);
-        if (fileName === 'index.html') {
-            return serveLiveReloadedIndex(request, reply);
-        }
-    }
-
-    // SPA mode
-    if (config.spa &&
-        response.isBoom &&
-        response.output.statusCode === 404) {
-        if (config.livereload) {
-            return serveLiveReloadedIndex(request, reply);
-        } else {
-            return reply.file('index.html');
-        }
-    }
-
-    return reply.continue();
-});
-
-let loggingOptions = {};
-if (verbose) {
-    loggingOptions = {
-        reporters: {
-            console: [{
-                module: 'good-squeeze',
-                name: 'Squeeze',
-                args: [{
-                    response: '*',
-                    log: '*'
-                }]
-            }, {
-                module: 'good-console'
-            }, 'stdout']
-        }
-    };
-}
-
-server.register({
-    register: Good,
-    options: loggingOptions
-}, (err) => {
-    if (err) {
-        throw err; // something bad happened loading the plugin
-    }
-
-    server.start((err) => {
-        if (err) {
-            throw err;
-        }
-        console.log(`Server running at: ${server.info.uri}`);
-
-        if (config.open) {
-            opn(server.info.uri);
-        }
-    });
-});
-
-function setupWatcher (watcher) {
-    watcher
-        .on('add', path => log(`File ${path} has been added`))
-        .on('change', path => log(`File ${path} has been changed`))
-        .on('unlink', path => log(`File ${path} has been removed`));
-
-    watcher.on('change', throttle(200, path => {
-        // console.log(Path.relative(dir, path));
-        tinylr.changed(path);
-    }));
-}
-
-function throttle (delay, fn) {
-    var now = Date.now();
-
-    return function () {
-        var from = Date.now();
-        var interval = from - now;
-        if (interval < delay) return;
-        now = from;
-        fn.apply(this, arguments);
-    };
-}
-
-if (config.livereload) {
-    tinylr().listen(config.lrPort, () => {
-        log(`Live reload listening on ${config.lrPort} port`);
-    });
-
-    let watcher = chokidar.watch('file, dir, glob, or array', {
-        ignored: /[\\\/](node_modules|bower_components)[\\\/]/,
-        persistent: true
-    });
-    setupWatcher(watcher);
-    watcher.add(config.dir);
-
-    if (config.watch && config.watch.length > 0) {
-        log('Also watching for live reload:');
-        log(config.watch);
-
-        // setup additonal watcher with no 'ignored' presets
-        let extraWatcher = chokidar.watch('file, dir, glob, or array', {
-            persistent: true
-        });
-
-        setupWatcher(extraWatcher);
-
-        for (let i = 0; i < config.watch.length; i++) {
-            extraWatcher.add(config.watch[i]);
-        }
-    }
-}
+const server = new Server(config);
+server.start();
