@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const chai = require('chai');
 const expect = chai.expect;
 const Server = require('../lib/server');
@@ -7,7 +8,10 @@ const EventEmitter = require('events').EventEmitter;
 const tinylr = require('tiny-lr');
 const sinon = require('sinon');
 const sinonChai = require('sinon-chai');
+const chaiHttp = require('chai-http');
+
 chai.use(sinonChai);
+chai.use(chaiHttp);
 
 describe('Server', () => {
     let server;
@@ -25,6 +29,31 @@ describe('Server', () => {
     it('should create defaults', () => {
         let settings = server.defaultSettings();
         expect(settings).to.not.be.undefined;
+    });
+
+    it('should override defaults', () => {
+        let custom = {
+            host: '192.168.0.1',
+            dir: '/tmp',
+            spa: true,
+            open: true,
+            livereload: true,
+            watch: [
+                '/tmp/f1/**/*.js'
+            ],
+            verbose: true
+        };
+
+        server = new Server(custom);
+        let config = server.config;
+
+        expect(config.host).to.equal(custom.host);
+        expect(config.dir).to.equal(custom.dir);
+        expect(config.spa).to.equal(custom.spa);
+        expect(config.open).to.equal(custom.open);
+        expect(config.livereload).to.equal(custom.livereload);
+        expect(config.watch).to.eql(custom.watch);
+        expect(config.verbose).to.equal(custom.verbose);
     });
 
     it('should log on watched file added', () => {
@@ -107,5 +136,27 @@ describe('Server', () => {
         expect(tinylr.changed).to.have.been.calledOnce;
         expect(tinylr.changed).to.have.been.calledWith(path);
         stub.restore();
+    });
+
+    it('should register custom index route for livereload', (done) => {
+        server = new Server({
+            port: 3000,
+            livereload: true,
+            dir: path.resolve(path.join(__dirname, 'assets')),
+            silent: true
+        });
+        var spy = sinon.spy(server, 'serveLiveReloadedIndex');
+
+        server.start(() => {
+            chai
+                .request('http://localhost:3000')
+                .get('/')
+                .end(function (err, res) {
+                    expect(err).to.be.null;
+                    expect(res).to.have.status(200);
+                    expect(spy).to.have.been.called;
+                    done();
+                });
+        });
     });
 });
