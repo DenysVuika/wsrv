@@ -155,8 +155,24 @@ describe('Server', () => {
                     expect(err).to.be.null;
                     expect(res).to.have.status(200);
                     expect(spy).to.have.been.called;
+                    server.serveLiveReloadedIndex.restore();
                     done();
                 });
+        });
+    });
+
+    it('should open url on start', (done) => {
+        server = new Server({
+            port: 3001,
+            open: true,
+            silent: true
+        });
+
+        var stub = sinon.stub(server, 'openUrl');
+        server.start(() => {
+            expect(stub).to.have.been.calledWith('http://localhost:3001');
+            stub.restore();
+            done();
         });
     });
 });
