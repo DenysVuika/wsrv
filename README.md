@@ -14,6 +14,21 @@ Features:
 
 ## Installing
 
+### As a global tool
+
+```sh
+npm install -g wsrv
+```
+
+Now you can serve any directory like following:
+
+```sh
+cd my-proj
+wsrv -o
+```
+
+### As a project dependency
+
 ```sh
 npm install --save-dev wsrv
 ```
