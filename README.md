@@ -65,13 +65,33 @@ This will automatically start server and open browser page on `npm start`.
 
 *Your default browser should automatically open at http://localhost:3000 address.*
 
+## External configuration file
+
+You can also create a separate configuration file to store all settings.
+You can create `wsrv-config.json` file in your working directory:
+
+```json
+{
+    "host": "localhost",
+    "dir": "<your directory>",
+    "spa": false,
+    "open": false,
+    "livereload": false,
+    "watch": [],
+    "verbose": false
+}
+```
+
+_Please note that command line parameters get higher priority and override
+corresponding entries in the configuration file._
+
 ## Available options
 
-`-a` or `--address` Address to use (defaults to `localhost`).
+`-a` or `--address=` Address to use (defaults to `localhost`).
 
-`-p` or `--port` Port to use (free available port selected by default).
+`-p` or `--port=` Port to use (free available port selected by default).
 
-`-d` or `--dir` Set working directory.
+`-d` or `--dir=` Set working directory.
 
 `-s` or `--spa` Enable SPA (Single Page Application) support (defaults to `false`).
 
@@ -83,6 +103,33 @@ This will automatically start server and open browser page on `npm start`.
 
 `-v` or `--version` Show version information.
 
-`-w` or `--watch` Additional files to watch for live reload.
+`-w` or `--watch=` Additional files to watch for live reload.
+
+`-c` or `--config=` Path to custom configuration file.
 
 `-h` Show help screen.
+
+## Using from code
+
+You can also embed wsrv into your node.js applications.
+
+```javascript
+const Server = require('wsrv');
+
+let config = {
+    open: true
+};
+
+new Server(config).start();
+```
+
+## How it works
+
+The server is a simple node app that serves the working directory and its subdirectories.
+It also watches the files for changes and when that happens,
+it sends a message through a web socket connection to the browser instructing it to reload.
+In order for the client side to support this, the server injects a small piece of
+JavaScript code to each requested html file. This script establishes the web socket
+connection and listens to the reload requests.
+CSS files can be refreshed without a full page reload by finding the referenced stylesheets
+from the DOM and tricking the browser to fetch and parse them again.
