@@ -62,6 +62,12 @@ const argv = require('yargs')
         describe: 'Path to custom configuration file.',
         type: 'string'
     })
+    .option('x', {
+        alias: 'ext',
+        descript: 'Server extensions',
+        type: 'array',
+        default: []
+    })
     .help('h')
     .argv;
 
@@ -75,7 +81,8 @@ let overrides = {
     livereload: argv.l,
     watch: argv.w,
     lrPort: 35729,
-    verbose: argv.verbose
+    verbose: argv.verbose,
+    ext: argv.x
 };
 
 let verbose = argv.verbose;
