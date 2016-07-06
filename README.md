@@ -45,6 +45,12 @@ Serve the content of the `www` subdirectory with SPA support and open browser
 instance at the root:
 
 ```sh
+wsrv -p 3000 -s -o
+```
+
+or
+
+```sh
 ./node_modules/.bin/wsrv ./www -p 3000 -s -o
 ```
 
@@ -107,7 +113,48 @@ corresponding entries in the configuration file._
 
 `-c` or `--config=` Path to custom configuration file.
 
+`-x` or `--ext=` Additonal server extensions to load.
+
 `-h` Show help screen.
+
+## External extensions
+
+Besides serving static content **wsrv** provides support for external
+[hapijs plugins](http://hapijs.com/tutorials/plugins).
+
+Example:
+
+**ext1.js**
+
+```js
+'use strict';
+
+exports.register = function (server, options, next) {
+
+    server.route({
+        method: 'GET',
+        path: '/test',
+        handler: function (request, reply) {
+            reply('test passed');
+        }
+    });
+
+    next();
+};
+
+exports.register.attributes = {
+    name: 'custom routes 1',
+    version: '1.0.0'
+};
+```
+
+You can now run this plugin together with static content similar to the following:
+
+```sh
+wsrv -o -x ext1.js
+```
+
+Newly introduced dynamic content will be available at `/test` path.
 
 ## Using from code
 
