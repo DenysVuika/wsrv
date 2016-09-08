@@ -11,6 +11,7 @@ Features:
 - Open browser upon startup
 - Directory listing, automatic index
 - Custom port and host settings
+- Custom server extensions
 
 ## Installing
 
@@ -71,6 +72,15 @@ This will automatically start server and open browser page on `npm start`.
 
 *Your default browser should automatically open at http://localhost:3000 address.*
 
+You can also define custom start page url:
+
+```json{
+    "scripts": {
+        "start": "wsrv ./www -p 3000 -s -l -O http://localhost:3000/about",
+    }
+}
+```
+
 ## External configuration file
 
 You can also create a separate configuration file to store all settings.
@@ -102,6 +112,8 @@ corresponding entries in the configuration file._
 `-s` or `--spa` Enable SPA (Single Page Application) support (defaults to `false`).
 
 `-o` or `--open` Open browser window after starting the server (defaults to `false`).
+
+`-O` or `--open-url=` Opens browser window at specific url after starting the server.
 
 `-l` or `--livereload` Enable live reload support (defaults to `false`).
 

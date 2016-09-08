@@ -39,6 +39,11 @@ const argv = require('yargs')
         type: 'boolean',
         default: false
     })
+    .option('O', {
+        alias: 'open-url',
+        describe: 'Opens browser window at specific url after starting the server.',
+        type: 'string'
+    })
     .option('l', {
         alias: 'livereload',
         describe: 'Enable live reload support.',
@@ -78,6 +83,7 @@ let overrides = {
     dir: path.resolve(argv._[0] || argv.d || process.cwd()),
     spa: argv.s,
     open: argv.o,
+    openUrl: argv.O,
     livereload: argv.l,
     watch: argv.w,
     lrPort: 35729,
