@@ -74,7 +74,8 @@ This will automatically start server and open browser page on `npm start`.
 
 You can also define custom start page url:
 
-```json{
+```json
+{
     "scripts": {
         "start": "wsrv ./www -p 3000 -s -l -O http://localhost:3000/about",
     }
