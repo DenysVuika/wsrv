@@ -37,6 +37,7 @@ describe('Server', () => {
             dir: '/tmp',
             spa: true,
             open: true,
+            openUrl: '127.0.0.1',
             livereload: true,
             watch: [
                 '/tmp/f1/**/*.js'
@@ -51,6 +52,7 @@ describe('Server', () => {
         expect(config.dir).to.equal(custom.dir);
         expect(config.spa).to.equal(custom.spa);
         expect(config.open).to.equal(custom.open);
+        expect(config.openUrl).to.equal(custom.openUrl);
         expect(config.livereload).to.equal(custom.livereload);
         expect(config.watch).to.eql(custom.watch);
         expect(config.verbose).to.equal(custom.verbose);
@@ -171,6 +173,42 @@ describe('Server', () => {
         var stub = sinon.stub(server, 'openUrl');
         server.start(() => {
             expect(stub).to.have.been.calledWith('http://localhost:3001');
+            stub.restore();
+            done();
+        });
+    });
+
+    it('should open at custom url on start', (done) => {
+        const targetUrl = 'http://localhost:3333';
+
+        server = new Server({
+            port: 3002,
+            open: false,
+            openUrl: targetUrl,
+            silent: true
+        });
+
+        var stub = sinon.stub(server, 'openUrl');
+        server.start(() => {
+            expect(stub).to.have.been.calledWith(targetUrl);
+            stub.restore();
+            done();
+        });
+    });
+
+    it('should open custom url even if open switch enabled', (done) => {
+        const targetUrl = 'http://localhost:3333';
+
+        server = new Server({
+            port: 3003,
+            open: true,
+            openUrl: targetUrl,
+            silent: true
+        });
+
+        var stub = sinon.stub(server, 'openUrl');
+        server.start(() => {
+            expect(stub).to.have.been.calledWith(targetUrl);
             stub.restore();
             done();
         });
