@@ -69,7 +69,7 @@ const argv = require('yargs')
     })
     .option('x', {
         alias: 'ext',
-        descript: 'Server extensions',
+        describe: 'Server extensions',
         type: 'array',
         default: []
     })
