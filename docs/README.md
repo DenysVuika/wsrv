@@ -186,10 +186,10 @@ new Server(config).start();
 ## How it works
 
 The server is a simple node app that serves the working directory and its subdirectories.
-It also watches the files for changes and when that happens,
+
+It also watches the files for changes, and when that happens,
 it sends a message through a web socket connection to the browser instructing it to reload.
-In order for the client side to support this, the server injects a small piece of
-JavaScript code to each requested html file. This script establishes the web socket
-connection and listens to the reload requests.
-CSS files can be refreshed without a full page reload by finding the referenced stylesheets
-from the DOM and tricking the browser to fetch and parse them again.
+For the client side to support this, the server injects a small piece of JavaScript code to each requested HTML file.
+This script establishes the web socket connection and listens to the reload requests.
+CSS files can be refreshed without a full page reload by finding the referenced stylesheets from the DOM
+and tricking the browser to fetch and parse them again.

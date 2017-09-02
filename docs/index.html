@@ -11,7 +11,24 @@
   <div id="app"></div>
   <script src="https://unpkg.com/docute@3/dist/docute.js"></script>
   <script>
-    docute.init()
+    docute.init({
+        announcement: {
+            type: 'success',
+            html: '<a style="margin-right:10px;" class="docute-button docute-button-mini docute-button-success" href="https://paypal.me/DenysVuika" target="_blank">Donate!</a> Support wsrv development by making a one-time donation.'
+        },
+        icons: [
+            {
+                icon: 'github',
+                label: 'Contribute on GitHub',
+                link: 'https://github.com/DenisVuyka/wsrv'
+            },
+            {
+                icon: 'twitter',
+                label: 'Follow me on Twitter',
+                link: 'https://twitter.com/DenysVuika'
+            }
+        ]
+    })
   </script>
 </body>
 </html>
