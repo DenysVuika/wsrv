@@ -13,6 +13,8 @@ Features:
 - Custom port and host settings
 - Custom server extensions
 
+[Documentation](http://denisvuyka.github.io/wsrv/)
+
 ## Installing
 
 ### As a global tool
