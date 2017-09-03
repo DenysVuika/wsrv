@@ -1,6 +1,6 @@
 # wsrv: micro web server
 
-[![npm](https://img.shields.io/npm/v/wsrv.svg?maxAge=2592000)](https://www.npmjs.com/package/wsrv)
+[![npm](https://img.shields.io/npm/v/wsrv.svg)](https://www.npmjs.com/package/wsrv)
 [![Build Status](https://travis-ci.org/DenisVuyka/wsrv.svg?branch=master)](https://travis-ci.org/DenisVuyka/wsrv)
 
 ## Features
