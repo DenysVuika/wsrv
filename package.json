@@ -1,7 +1,7 @@
 {
   "name": "wsrv",
   "version": "0.2.0",
-  "description": "Micro web server",
+  "description": "micro web server",
   "main": "./bin/wsrv.js",
   "scripts": {
     "start": "node ./bin/wsrv",
