@@ -1,17 +1,19 @@
-# wsrv: micro web server for development purposes
+# wsrv: micro web server
 
 [![npm](https://img.shields.io/npm/v/wsrv.svg?maxAge=2592000)](https://www.npmjs.com/package/wsrv)
 [![Build Status](https://travis-ci.org/DenisVuyka/wsrv.svg?branch=master)](https://travis-ci.org/DenisVuyka/wsrv)
 
-Features:
+## Features
 
-- Dynamic port allocation on startup
 - SPA (Single Page Application) support
+- Proxy settings for particular routes
 - Live reload and file watchers
 - Open browser upon startup
 - Directory listing, automatic index
 - Custom port and host settings
 - Custom server extensions
+- Dynamic port allocation on startup
+- Command line options and configuration file suppport
 
 ## Installing
 
@@ -70,7 +72,10 @@ content of the `www` folder like following:
 
 This will automatically start server and open browser page on `npm start`.
 
-*Your default browser should automatically open at http://localhost:3000 address.*
+<p class="tip">
+Your default browser should automatically open at http://localhost:3000 address.
+The server also enables SPA (`-s`) and live reload (`-l`) modes.
+</p>
 
 You can also define custom start page url:
 
@@ -82,10 +87,10 @@ You can also define custom start page url:
 }
 ```
 
-## External configuration file
+## Configuration file
 
 You can also create a separate configuration file to store all settings.
-You can create `wsrv-config.json` file in your working directory:
+Just create a `wsrv-config.json` file in your working directory:
 
 ```json
 {
@@ -93,16 +98,21 @@ You can create `wsrv-config.json` file in your working directory:
     "dir": "<your directory>",
     "spa": false,
     "open": false,
+    "openUrl": null,
     "livereload": false,
+    "lrPort": 35729,
     "watch": [],
-    "verbose": false
+    "verbose": false,
+    "proxy": null,
+    "ext": []
 }
 ```
 
-_Please note that command line parameters get higher priority and override
-corresponding entries in the configuration file._
+<p class="tip">
+You do not need enumerating all the settings in the file, just set the values you want to override or define.
+</p>
 
-## Available options
+## Options
 
 `-a` or `--address=` Address to use (defaults to `localhost`).
 
@@ -130,14 +140,58 @@ corresponding entries in the configuration file._
 
 `-h` Show help screen.
 
-## External extensions
+## Proxy
 
-Besides serving static content **wsrv** provides support for external
+It is also possible to generate and configure a reverse proxy handlers for particular routes.
+
+<p class="tip">
+Please note that this feature is available for configuration files only.
+</p>
+
+Let's update the `wsrv-config.json` file to enable proxy for all the routes that start with `/ecm` and forward requests to `http://0.0.0.0:8080` instead:
+
+```json
+{
+    "proxy": {
+        "/ecm/{p*}": {
+            "options": {
+                "uri": "http://0.0.0.0:8080/{p}"
+            }
+        }
+    }
+}
+```
+
+The server provides reasonable defaults, but you can customise or fine-tune proxy settings like in the example below:
+
+```json
+{
+    "proxy": {
+        "/ecm/{p*}": {
+            "methods": ["GET", "POST", "PUT", "DELETE"],
+            "options": {
+                "uri": "http://0.0.0.0:8080/{p}",
+                "passThrough": true,
+                "redirects": 9999,
+                "xforward": true
+            }
+        }
+    }
+}
+```
+
+<p class="tip">
+For a full list of available options refer to the h2o2 plugin [documentation](https://github.com/hapijs/h2o2#options).
+</p>
+
+## Plugins
+
+Besides serving static content, **wsrv** provides support for external
 [hapijs plugins](http://hapijs.com/tutorials/plugins).
 
 Example:
 
-**ext1.js**
+**ext1.js**:
 
 ```js
 'use strict';
@@ -167,11 +221,11 @@ You can now run this plugin together with static content similar to the followin
 wsrv -o -x ext1.js
 ```
 
-Newly introduced dynamic content will be available at `/test` path.
+Newly introduced dynamic content is available at `/test` path.
 
 ## Using from code
 
-You can also embed wsrv into your node.js applications.
+You can also embed `wsrv` into your node.js applications.
 
 ```javascript
 const Server = require('wsrv');

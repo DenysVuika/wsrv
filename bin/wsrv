@@ -2,7 +2,6 @@
 'use strict';
 
 const path = require('path');
-const _ = require('lodash');
 const Server = require('../lib/server');
 
 const argv = require('yargs')
@@ -76,8 +75,8 @@ const argv = require('yargs')
     .help('h')
     .argv;
 
-// command line arguments have highest priority
-let overrides = {
+// command line arguments
+let commandLineArgs = {
     host: argv.a,
     port: argv.p,
     dir: path.resolve(argv._[0] || argv.d || process.cwd()),
@@ -93,9 +92,9 @@ let overrides = {
 
 let verbose = argv.verbose;
 
-// External configuration
-let configName = argv.config || 'wsrv-config';
-let configPath = path.resolve(configName);
+// External configuration (have highest priority)
+const configName = argv.config || 'wsrv-config';
+const configPath = path.resolve(configName);
 let config = {};
 
 const log = function (message) {
@@ -117,7 +116,7 @@ try {
     }
 }
 
-_.merge(config, overrides);
+config = Object.assign({}, commandLineArgs, config);
 log(`Using configuration: ${configPath}`);
 
 const server = new Server(config);
