@@ -112,6 +112,26 @@ Just create a `wsrv-config.json` file in your working directory:
 You do not need enumerating all the settings in the file, just set the values you want to override or define.
 </p>
 
+### Dynamic configuration
+
+The `wsrv` also supports dynamic configurations. Create a new `wsrv-config.js` file and declare a function as a module export. The function must return a JSON object with configuration settings.
+
+For example:
+
+```js
+module.exports = function () {
+    return {
+        "proxy": {
+            "/ecm/{p*}": {
+                "options": {
+                    "uri": "http://0.0.0.0:8080/{p}"
+                }
+            }
+        }
+    }
+}
+```
+
 ## Options
 
 `-a` or `--address=` Address to use (defaults to `localhost`).
