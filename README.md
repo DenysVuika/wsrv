@@ -1,7 +1,6 @@
 # wsrv: micro web server
 
-[![npm](https://img.shields.io/npm/v/wsrv.svg)](https://www.npmjs.com/package/wsrv)
-[![Build Status](https://travis-ci.org/DenisVuyka/wsrv.svg?branch=master)](https://travis-ci.org/DenisVuyka/wsrv)
+**Project has moved to https://denysvuika.gitlab.io/wsrv/**
 
 Features:
 
@@ -13,50 +12,4 @@ Features:
 - Custom port and host settings
 - Custom server extensions
 
-## [Documentation](http://denisvuyka.github.io/wsrv/)
-
-## Installing
-
-### As a global tool
-
-```sh
-npm install -g wsrv
-```
-
-Now you can serve any directory like following:
-
-```sh
-cd my-proj
-wsrv -o
-```
-
-### As a project dependency
-
-```sh
-npm install --save-dev wsrv
-```
-
-## Usage
-
-```sh
-./wsrv [path] [options]
-```
-
-## Example
-
-Serve the content of the `www` subdirectory with SPA support and open browser
-instance at the root:
-
-```sh
-wsrv -p 3000 -s -o
-```
-
-or
-
-```sh
-./node_modules/.bin/wsrv ./www -p 3000 -s -o
-```
-
-## More details
-
-You can get more details and examples in the official [documentation](http://denisvuyka.github.io/wsrv/).
+## [Documentation](https://denysvuika.gitlab.io/wsrv/#/)
